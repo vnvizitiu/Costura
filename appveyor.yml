@@ -1,7 +1,21 @@
+skip_tags: true
+
 configuration: Release
 
+image: Visual Studio 2017
+
 before_build:
-  - nuget restore
+  - nuget restore src\Costura.sln
+
+after_build:
+  - src\BuildNuGetPackage\bin\Release\BuildNuGetPackage.exe artifacts
+
+build:
+  parallel: true
+  project: src\Costura.sln
+
+test_script:
+  - nunit3-console src\Costura.Tests\bin\Release\Costura.Tests.dll --x86 --result=myresults.xml;format=AppVeyor
 
 artifacts:
-  - path: NuGetBuild\*.nupkg
+  - path: artifacts\*.nupkg
