@@ -1,25 +1,46 @@
-![Icon](https://raw.github.com/Fody/Costura/master/Icons/package_icon.png)
+![Costura Icon](https://raw.github.com/Fody/Costura/master/Icons/package_icon.png)
 
-### This is an add-in for [Fody](https://github.com/Fody/Fody/) 
+### Costura is an add-in for [Fody](https://github.com/Fody/Fody/) 
 
 Embeds dependencies as resources.
 
-## The nuget package  [![NuGet Status](http://img.shields.io/nuget/v/Costura.Fody.svg?style=flat)](https://www.nuget.org/packages/Costura.Fody/) [![Build status](https://ci.appveyor.com/api/projects/status/62ur9tuwt69xap7t?svg=true)](https://ci.appveyor.com/project/Fody/costura)
+[![Chat on Gitter](https://img.shields.io/gitter/room/fody/fody.svg?style=flat)](https://gitter.im/Fody/Fody)
+[![NuGet Status](http://img.shields.io/nuget/v/Costura.Fody.svg?style=flat)](https://www.nuget.org/packages/Costura.Fody/)
+[![Build Status](https://ci.appveyor.com/api/projects/status/62ur9tuwt69xap7t?svg=true)](https://ci.appveyor.com/project/Fody/costura)
 
-https://nuget.org/packages/Costura.Fody/
+### To Install
 
     PM> Install-Package Costura.Fody
 
-## How it works
+# Contents
 
-### Merge assemblies as embedded resources.
+- [How it works](#how-it-works-link)
+  - [Merge assemblies as embedded resources](#merge-assemblies-as-embedded-resources)
+  - [Details](defails)
+- [Configuration Options](#configuration-options-link)
+  - [CreateTemporaryAssemblies](#createtemporaryassemblies)
+  - [IncludeDebugSymbols](#includedebugsymbols)
+  - [DisableCompression](#disablecompression)
+  - [DisableCleanup](#disablecleanup)
+  - [LoadAtModuleInit](#loadatmoduleinit)
+  - [ExcludeAssemblies](#excludeassemblies)
+  - [IncludeAssemblies](#includeassemblies)
+  - [Unmanaged32Assemblies & Unmanaged64Assemblies](#unmanaged32assemblies--unmanaged64assemblies)
+  - [Native Libraries and PreloadOrder](#native-libraries-and-preloadorder)
+- [CosturaUtility](#costurautility-link)
+- [Icon](#icon-link)
+- [Contributors](#contributors-link)
+
+# How it works [:link:](#contents)
+
+## Merge assemblies as embedded resources
 
 This approach uses a combination of two methods
 
  * Jeffrey Richter's suggestion of using [embedded resources as a method of merging assemblies](http://blogs.msdn.com/b/microsoft_press/archive/2010/02/03/jeffrey-richter-excerpt-2-from-clr-via-c-third-edition.aspx)
  * Einar Egilsson's suggestion [using cecil to create module initializers](http://tech.einaregilsson.com/2009/12/16/module-initializers-in-csharp/)
 
-### Details 
+## Details 
 
 This Task performs the following changes
 
@@ -38,7 +59,7 @@ eg
   - [ILTemplate.cs](https://github.com/Fody/Costura/blob/master/Template/ILTemplate.cs)
   - [ILTemplateWithTempAssembly.cs](https://github.com/Fody/Costura/blob/master/Template/ILTemplateWithTempAssembly.cs)
 
-## Configuration Options
+# Configuration Options [:link:](#contents)
 
 All config options are access by modifying the `Costura` node in FodyWeavers.xml
 
@@ -64,7 +85,23 @@ Embedded assemblies are compressed by default, and uncompressed when they are lo
 
 *Defaults to `false`*
 
-    <Costura DisableCompression='false' />
+    <Costura DisableCompression='true' />
+
+### DisableCleanup
+
+As part of Costura, embedded assemblies are no longer included as part of the build. This cleanup can be turned off.
+
+*Defaults to `false`*
+
+    <Costura DisableCleanup='true' />
+
+### LoadAtModuleInit
+
+Costura by default will load as part of the module initialization. This flag disables that behaviour. Make sure you call `CosturaUtility.Initialize()` somewhere in your code.
+
+*Defaults to `true`*
+
+    <Costura LoadAtModuleInit='false' />
     
 ### ExcludeAssemblies
 
@@ -85,7 +122,7 @@ As an element with items delimited by a newline.
         </ExcludeAssemblies>
     </Costura>
     
-Or as a attribute with items delimited by a pipe `|`.
+Or as an attribute with items delimited by a pipe `|`.
 
     <Costura ExcludeAssemblies='Foo|Bar' />
     
@@ -109,7 +146,7 @@ As an element with items delimited by a newline.
         </IncludeAssemblies>
     </Costura>
     
-Or as a attribute with items delimited by a pipe `|`.
+Or as an attribute with items delimited by a pipe `|`.
 
     <Costura IncludeAssemblies='Foo|Bar' />
 
@@ -162,27 +199,25 @@ Or as a attribute with items delimited by a pipe `|`.
 
     <Costura PreloadOrder='Foo|Bar' />
 
-## Creating a clean output directory
+# CosturaUtility [:link:](#contents)
 
-Costura only merges dependencies. It does not handle cleaning those dependencies from your output directory. So this means the resultant merged dll/exe will exist in your output directory (eg `bin\Debug`) next to all your dependencies. If you want to clean this directory you can add the following to your project file.
+`CosturaUtility` is a class that gives you access to initialize the Costura system manually in your own code. This is mainly for scenarios where the module initializer doesn't work, such as libraries and Mono.
 
-    <Target 
-        AfterTargets="AfterBuild;NonWinFodyTarget"
-        Name="CleanReferenceCopyLocalPaths" >
-         <Delete Files="@(ReferenceCopyLocalPaths->'$(OutDir)%(DestinationSubDirectory)%(Filename)%(Extension)')" />
-    </Target>
+To use, call `CosturaUtility.Initialize()` somewhere in your code, as early as possible.
 
-There is also a powershell cmdlet to install this target into your project automatically. In the Package Manager Console type:
+    class Program {
+        static Program() {
+            CosturaUtility.Initialize();
+        }
 
-    PM> Install-CleanReferencesTarget
+        static void Main(string[] args) { ... }
+    }
 
-Note that this does not handle `ExcludeAssemblies` or `IncludeAssemblies` options mentioned above. You will have to handle these explicitly.
-
-## Icon
+# Icon [:link:](#contents)
 
 <a href="http://thenounproject.com/noun/merge/#icon-No256" target="_blank">Merge</a>  from The Noun Project
 
-## Contributors
+# Contributors [:link:](#contents)
 
  * [Cameron MacFarland](https://github.com/distantcam)
  * [Simon Cropp](https://github.com/SimonCropp) 

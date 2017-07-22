@@ -60,9 +60,9 @@ static class Common
 
     public static string CalculateChecksum(string filename)
     {
-        using (var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        using (var fs = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
         using (var bs = new BufferedStream(fs))
-        using (var sha1 = new SHA1Managed())
+        using (var sha1 = new SHA1CryptoServiceProvider())
         {
             var hash = sha1.ComputeHash(bs);
             var formatted = new StringBuilder(2 * hash.Length);
@@ -105,7 +105,7 @@ static class Common
         var name = requestedAssemblyName.Name.ToLowerInvariant();
 
         if (requestedAssemblyName.CultureInfo != null && !String.IsNullOrEmpty(requestedAssemblyName.CultureInfo.Name))
-            name = String.Format("{0}.{1}", requestedAssemblyName.CultureInfo.Name, name);
+            name = $"{requestedAssemblyName.CultureInfo.Name}.{name}";
 
         var bittyness = IntPtr.Size == 8 ? "64" : "32";
         var assemblyTempFilePath = Path.Combine(tempBasePath, String.Concat(name, ".dll"));
@@ -136,7 +136,7 @@ static class Common
         var name = requestedAssemblyName.Name.ToLowerInvariant();
 
         if (requestedAssemblyName.CultureInfo != null && !String.IsNullOrEmpty(requestedAssemblyName.CultureInfo.Name))
-            name = String.Format("{0}.{1}", requestedAssemblyName.CultureInfo.Name, name);
+            name = $"{requestedAssemblyName.CultureInfo.Name}.{name}";
 
         byte[] assemblyData;
         using (var assemblyStream = LoadStream(assemblyNames, name))
@@ -173,7 +173,7 @@ static class Common
     {
         var executingAssembly = Assembly.GetExecutingAssembly();
 
-        if (fullname.EndsWith(".zip"))
+        if (fullname.EndsWith(".compressed"))
         {
             using (var stream = executingAssembly.GetManifestResourceStream(fullname))
             using (var compressStream = new DeflateStream(stream, CompressionMode.Decompress))
@@ -191,7 +191,7 @@ static class Common
     // Mutex code from http://stackoverflow.com/questions/229565/what-is-a-good-pattern-for-using-a-global-mutex-in-c
     public static void PreloadUnmanagedLibraries(string hash, string tempBasePath, IEnumerable<string> libs, Dictionary<string, string> checksums)
     {
-        var mutexId = string.Format("Global\\Costura{0}", hash);
+        var mutexId = $"Global\\Costura{hash}";
 
         using (var mutex = new Mutex(false, mutexId))
         {
@@ -287,9 +287,9 @@ static class Common
             name = lib.Substring(8);
         }
 
-        if (name.EndsWith(".zip"))
+        if (name.EndsWith(".compressed"))
         {
-            name = name.Substring(0, name.Length - 4);
+            name = name.Substring(0, name.Length - 11);
         }
 
         return name;
